@@ -24,7 +24,7 @@ export default function TripCard({ trip }: { trip: TripSummary }) {
   const dayLabel = trip.days === 1 ? "day" : "days";
 
   return (
-    <Card className="relative aspect-[6/5] overflow-hidden rounded-lg border-[10px] border-white shadow-2xl">
+    <Card className="relative aspect-[7/6] overflow-hidden rounded-2xl border-[10px] border-white shadow-2xl">
       <img
         src={trip.photoUrl}
         alt={trip.title}
@@ -33,29 +33,29 @@ export default function TripCard({ trip }: { trip: TripSummary }) {
 
       <div className="relative z-10 flex h-full flex-col p-3">
         <div className="flex flex-1 flex-col items-center justify-center text-center">
-          <h3 className="text-md leading-tight text-white/80 mt-2">{trip.title}</h3>
-          <p className="mt-2 text-xs text-white/90">
+          <h3 className="text-md font-semibold leading-tight text-white mt-2">{trip.title}</h3>
+          <p className="mt-1 text-[10px] text-white/90">
             {trip.countries.length} {countryLabel}, {trip.days} {dayLabel}
           </p>
           <Button
             asChild
-            className="my-3 h-8 rounded-md bg-blue-500 p-3 text-xs text-white/60 font-semibold hover:bg-blue-600"
+            className="my-3 h-6 rounded-md bg-blue-500 px-2.5 text-[10px] text-white/60 font-semibold hover:bg-blue-600"
           >
             <Link to={`/trips/${trip.id}`}>Learn more</Link>
           </Button>
         </div>
 
-        <div className="flex items-center justify-between gap-2 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-2.5 text-xs text-white/60">
+        <div className="flex items-center justify-between gap-2 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-2.5 text-[10px] text-white/60">
           <span>Emissions offset:</span>
           <span className="font-semibold">{formatEmissions(trip.co2kilograms)}</span>
         </div>
 
-        <div className="-mx-3 -mb-3 mt-2 flex items-center justify-between gap-2 whitespace-nowrap rounded-t-lg bg-white px-4 py-2.5 text-xs">
+        <div className="-mb-3 mt-2 mx-auto flex w-fit items-center gap-7 whitespace-nowrap rounded-t-lg bg-white px-4 py-2 text-[10px]">
           <span className="font-semibold">Trip rating</span>
           <StarRating rating={trip.rating} />
         </div>
       </div>
-      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/35 to-black/55" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-black/55" />
     </Card>
   );
 }
