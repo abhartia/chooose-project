@@ -133,6 +133,13 @@ app.use((_req, _res, next) => {
   setTimeout(next, 200 + Math.random() * 200);
 });
 
+app.get("/", (_req, res) => {
+  res.json({
+    name: "chooose-mock-server",
+    endpoints: ["GET /trips", "GET /trips/:id"],
+  });
+});
+
 app.get("/trips", (req, res) => {
   const parsed = listQuerySchema.safeParse(req.query);
   if (!parsed.success) {
