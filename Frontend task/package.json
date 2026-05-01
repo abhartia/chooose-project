@@ -1,0 +1,18 @@
+{
+  "name": "chooose-frontend-workspace",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "frontend",
+    "mock-server"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n server,web -c blue,green \"npm -w mock-server run dev\" \"npm -w frontend run dev\"",
+    "generate": "npm -w frontend run generate",
+    "build": "npm -w frontend run build",
+    "lint": "npm -w frontend run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}

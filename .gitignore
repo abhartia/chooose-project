@@ -1,0 +1,7 @@
+.DS_Store
+/Backend task/WorkdayNet.Tests/bin
+/Backend task/WorkdayNet.Tests/obj
+/Backend task/WorkdayNet/obj
+/Backend task/WorkdayNet/bin
+.claude/scheduled_tasks.lock
+/Backend task/WorkdayNet.Tests/TestResults

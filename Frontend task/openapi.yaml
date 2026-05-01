@@ -1,0 +1,214 @@
+openapi: 3.1.0
+info:
+  title: Chooose Trips API
+  version: 1.0.0
+  description: |
+    Mock API for the Chooose frontend assessment. Exposes a paginated list of
+    trips and a per-trip detail endpoint. The list uses opaque cursor-based
+    pagination so it composes naturally with TanStack `useInfiniteQuery`.
+servers:
+  - url: http://localhost:4000
+    description: Local mock server
+
+paths:
+  /trips:
+    get:
+      operationId: listTrips
+      summary: List trips
+      description: |
+        Returns a page of trip summaries. Use the `cursor` from `pageInfo.nextCursor`
+        to fetch the next page. Cursors are tied to the `sort` and filter values
+        used to mint them; changing those parameters mid-pagination invalidates
+        the cursor and yields a 400 `INVALID_CURSOR` error.
+      parameters:
+        - in: query
+          name: cursor
+          schema:
+            type: string
+          description: Opaque pagination token. Omit on the first request.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 12
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum:
+              - rating
+              - "-rating"
+              - days
+              - "-days"
+              - co2kilograms
+              - "-co2kilograms"
+              - title
+              - "-title"
+            default: "-rating"
+        - in: query
+          name: country
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          description: Filter trips that include any of these countries (OR semantics).
+        - in: query
+          name: minRating
+          schema:
+            type: number
+            minimum: 0
+            maximum: 5
+        - in: query
+          name: maxDays
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: A page of trips.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripList"
+        "400":
+          description: Invalid query or stale cursor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /trips/{id}:
+    get:
+      operationId: getTripById
+      summary: Get a single trip
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The trip.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+        "404":
+          description: Trip not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    TripSummary:
+      type: object
+      required:
+        - id
+        - photoUrl
+        - title
+        - subtitle
+        - countries
+        - days
+        - co2kilograms
+        - rating
+      properties:
+        id:
+          type: integer
+        photoUrl:
+          type: string
+          format: uri
+        title:
+          type: string
+        subtitle:
+          type: string
+        countries:
+          type: array
+          items:
+            type: string
+        days:
+          type: integer
+        co2kilograms:
+          type: number
+        rating:
+          type: number
+
+    Advantage:
+      type: object
+      required:
+        - title
+        - description
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+
+    Trip:
+      allOf:
+        - $ref: "#/components/schemas/TripSummary"
+        - type: object
+          required:
+            - description
+            - advantages
+          properties:
+            description:
+              type: string
+            advantages:
+              type: array
+              items:
+                $ref: "#/components/schemas/Advantage"
+
+    PageInfo:
+      type: object
+      required:
+        - nextCursor
+        - hasNextPage
+        - limit
+      properties:
+        nextCursor:
+          type: string
+          nullable: true
+          description: Pass to the next request as `cursor`. `null` when there are no more pages.
+        hasNextPage:
+          type: boolean
+        limit:
+          type: integer
+
+    TripList:
+      type: object
+      required:
+        - items
+        - pageInfo
+        - totalCount
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TripSummary"
+        pageInfo:
+          $ref: "#/components/schemas/PageInfo"
+        totalCount:
+          type: integer
+          description: Total trips matching the filter, independent of the cursor stream.
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - INVALID_CURSOR
+            - INVALID_QUERY
+            - NOT_FOUND
+        message:
+          type: string
