@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  frontend:
+    name: Frontend (build + lint)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: "Frontend task"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: "Frontend task/package-lock.json"
+
+      # `npm ci` installs strictly from the lockfile and fails if it
+      # disagrees with package.json. Use this in CI rather than `npm install`
+      # so that manifest/lockfile drift is caught, not silently reconciled.
+      - name: Install (strict, lockfile-driven)
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # `npm run build` runs `prebuild` (Hey-API codegen) → `tsc -b` →
+      # `vite build`. The typecheck step is what catches missing dependency
+      # imports: if any src file imports a package that isn't in the
+      # installed tree, tsc fails with TS2307 "Cannot find module".
+      # That is exactly the failure mode of a shadcn-added dependency that
+      # never made it into package.json.
+      - name: Build (codegen + typecheck + bundle)
+        run: npm run build
+
+      # The committed generated client must match what `openapi.yaml`
+      # produces. If anyone edits the spec without regenerating, this fails.
+      # (Drop this step if you decide to gitignore the generated output.)
+      - name: Verify generated client is up to date
+        run: |
+          if ! git diff --quiet -- frontend/src/api/generated; then
+            echo "::error::frontend/src/api/generated is stale relative to openapi.yaml. Run 'npm run generate' and commit."
+            git --no-pager diff --stat -- frontend/src/api/generated
+            exit 1
+          fi
+
+  backend:
+    name: Backend (build + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: "Backend task"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "7.0.x"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release --logger "console;verbosity=normal"
